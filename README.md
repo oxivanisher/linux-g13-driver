@@ -47,7 +47,7 @@ The installation process will clean up automatically after finishing.
 ## Choose your Installation Method
 
 ### Option A: System-Wide Installation (Standard)
-This is the recommended method for standard usage. It installs binaries to /usr/bin and resources to /usr/share/.
+This is the recommended method for standard usage. It installs binaries to /usr/bin and resources to /usr/share/, including a "G13 Configuration" start menu entry.
 
 ```bash
 sudo make install
@@ -66,6 +66,8 @@ This method installs everything to your home directory (~/.local/bin). It is int
 make install-user
 ```
 Driver: Installed to ~/.local/bin/linux-g13-driver
+
+Start menu: A "G13 Configuration" entry is added to ~/.local/share/applications.
 
 Service: Automatically enabled and started immediately.
 
@@ -101,7 +103,7 @@ systemctl --user restart g13
 
 After starting the driver, you will see a new icon in your system tray/taskbar. This allows you to open the config menu or quit the driver.
 
-Alternatively, run it from the terminal:
+You can also start it from your start menu ("G13 Configuration"), or run it from the terminal:
 
 ```bash
 g13-gui

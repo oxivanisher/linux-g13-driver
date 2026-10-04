@@ -16,6 +16,7 @@ TARGET_NAME := Linux-G13-Driver
 TARGET_PATH := ../$(TARGET_NAME)
 SCRIPT_DIR  := ./scripts
 SERVICE_SRC := ./systemd/g13.service
+DESKTOP_SRC := ./desktop/linux-g13-gui.desktop
 
 # GUI Paths
 GUI_ROOT    := ../../g13-config-tool
@@ -72,6 +73,10 @@ install:
 	install -m 755 g13-gui $(DESTDIR)$(BINDIR)/g13-gui
 	rm g13-gui
 	
+	# Start menu entry
+	install -d $(DESTDIR)$(DATADIR)/applications
+	install -m 644 $(DESKTOP_SRC) $(DESTDIR)$(DATADIR)/applications/linux-g13-gui.desktop
+	
 	# UDEV
 	install -d $(DESTDIR)$(UDEVDIR)
 	install -m 644 udev/99-g13.rules $(DESTDIR)$(UDEVDIR)/99-g13.rules
@@ -90,6 +95,7 @@ install:
 USER_INSTALL_DIR := $(HOME)/.local/bin
 USER_CONFIG_DIR  := $(HOME)/.config/g13
 USER_SYSTEMD_DIR := $(HOME)/.config/systemd/user
+USER_APPS_DIR    := $(HOME)/.local/share/applications
 
 install-user:
 	@echo "--- Installing for Current User ($(USER)) ---"
@@ -105,6 +111,10 @@ install-user:
 	echo '#!/bin/sh' > $(USER_INSTALL_DIR)/g13-gui
 	echo 'java -jar $(USER_INSTALL_DIR)/$(GUI_JAR_NAME) "$$@"' >> $(USER_INSTALL_DIR)/g13-gui
 	chmod +x $(USER_INSTALL_DIR)/g13-gui
+	
+	# Start menu entry (absolute path, ~/.local/bin is not always in the menu's PATH)
+	mkdir -p $(USER_APPS_DIR)
+	sed 's|^Exec=g13-gui|Exec=$(USER_INSTALL_DIR)/g13-gui|' $(DESKTOP_SRC) > $(USER_APPS_DIR)/linux-g13-gui.desktop
 	
 	# Default Configs
 	if [ -z "$$(ls -A $(USER_CONFIG_DIR)/*.properties 2>/dev/null)" ]; then \

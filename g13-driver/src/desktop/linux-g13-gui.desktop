@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=G13 Configuration
+GenericName=Logitech G13 Configuration
+Comment=Configure key bindings and macros of the Logitech G13
+Exec=g13-gui
+Icon=input-gaming
+Terminal=false
+Categories=Settings;HardwareSettings;
+Keywords=logitech;g13;gamepad;keypad;macro;

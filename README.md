@@ -22,6 +22,7 @@ You need to install the following packages via your package manager:
 * `libappindicator-gtk3` (or similar)
 * `Java 17` or higher
 * `python-psutil` (for the monitor script)
+* Optional: `xmodmap` and `setxkbmap` (for key names matching your keyboard layout in the GUI, see [Keyboard Layouts](#keyboard-layouts)). They are usually already installed on X11 desktops (Debian/Ubuntu/Mint: `x11-xserver-utils`, Arch: `xorg-xmodmap` `xorg-setxkbmap`).
 
 ### Automated Dependency Installation
 
@@ -118,6 +119,16 @@ Live Reload: The driver automatically detects file changes and reloads the confi
 ![Config Tool Screenshot](docs/ConfigTool.png)
 
 The top 4 buttons under the LCD screen select the bindings (M1-M3, MR).
+
+### Keyboard Layouts
+
+Bindings and macros store the *physical* key you press, not the character. Your system applies its keyboard layout to the keys the G13 sends, so a key recorded on a Swiss, German, French, ... keyboard types the same character as on that keyboard.
+
+The GUI names the keys as they are printed on your keyboard. It reads the active layout once at startup (via `xmodmap` and `setxkbmap`), and the layout in use is shown below the G13 keypad, e.g. `Keyboard layout: ch (system: ch,us)`.
+
+* If several layouts are configured, the key names follow the **first** one. Bindings still work with all of them; only the names in the GUI may differ.
+* If the layout cannot be read (e.g. `xmodmap` is not installed), the GUI shows `Keyboard layout: US` and uses US key names. The bindings themselves are not affected.
+* If key names look wrong, check the layout shown there first. Restart the GUI after changing your keyboard layout.
 
 > **Important:** If you configure the application while the driver is running, the driver will not pick up changes unless you select a different binding set or restart the driver.
 

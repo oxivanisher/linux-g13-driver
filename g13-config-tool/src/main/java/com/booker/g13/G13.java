@@ -7,6 +7,7 @@ import java.util.Set;
 
 import javax.swing.BorderFactory;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
@@ -97,6 +98,9 @@ public class G13 extends JPanel {
 		final JPanel p = new JPanel(new BorderLayout());
 		p.setBorder(BorderFactory.createTitledBorder("G13 Keypad"));
 		p.add(g13Label, BorderLayout.CENTER);
+		final JLabel layoutLabel = new JLabel(SystemKeyboardLayout.description());
+		layoutLabel.setToolTipText("Key names are shown as on this keyboard layout. Bindings store the physical key, so they work with any layout.");
+		p.add(layoutLabel, BorderLayout.SOUTH);
 		add(p, BorderLayout.CENTER);
 		
 		final JPanel rightPanel = new JPanel(new BorderLayout());

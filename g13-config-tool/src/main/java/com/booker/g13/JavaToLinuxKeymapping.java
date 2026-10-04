@@ -4,6 +4,7 @@ import java.awt.event.KeyEvent;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -159,10 +160,16 @@ public class JavaToLinuxKeymapping {
 
     /**
      * Converts a Linux driver keycode to its human-readable string name.
+     * Character keys are named after the system keyboard layout, other keys use the names from the table.
      * @param keyCode The Linux keycode.
      * @return The string representation of the key (e.g., "F1", "Space").
      */
     public static String cKeyCodeToString(int keyCode) {
+        // Prefer the character the key produces on the system keyboard layout (e.g. "Z" or "Ä" on a Swiss layout).
+        Optional<String> layoutLabel = SystemKeyboardLayout.labelFor(keyCode);
+        if (layoutLabel.isPresent()) {
+            return layoutLabel.get();
+        }
         // Use getOrDefault for a safe fallback if the keycode is not found.
         return C_CODE_TO_DATA.getOrDefault(keyCode, new KeyMapping("Unknown (" + keyCode + ")", keyCode, -1))
                 .name();

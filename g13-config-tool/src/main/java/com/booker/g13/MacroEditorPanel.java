@@ -37,6 +37,7 @@ public class MacroEditorPanel extends JPanel {
 	private final JButton editButton = new JButton("Edit Delay");
 	private final JButton deleteButton = new JButton("Delete Step");
 	private final JButton recordButton = new JButton("Clear & Record");
+	private final JLabel readOnlyHint = new JLabel("Built-in macro, read-only. Choose macro [" + Configs.DEFAULT_MACROS_COUNT + "] or higher to create your own.");
 	
 	// --- State Variables ---
 	private volatile boolean loadingData = false; // Flag to prevent listeners firing during data load.
@@ -53,8 +54,8 @@ public class MacroEditorPanel extends JPanel {
 		setupUI();
         attachListeners();
 
-        // Initially disable components until a macro is selected.
-        setComponentStates(false);
+        // Set the initial component states (nothing selected yet).
+        updateComponentStates();
 	}
     
     /**
@@ -62,7 +63,9 @@ public class MacroEditorPanel extends JPanel {
      */
     private void setupUI() {
         final JPanel northPanel = new JPanel(new BorderLayout());
+		macroSelectionBox.setRenderer(new MacroListCellRenderer());
 		northPanel.add(macroSelectionBox, BorderLayout.NORTH);
+		northPanel.add(readOnlyHint, BorderLayout.CENTER);
 
 		final JPanel namePanel = new JPanel(new BorderLayout());
 		namePanel.add(new JLabel("Name : "), BorderLayout.WEST);
@@ -115,7 +118,7 @@ public class MacroEditorPanel extends JPanel {
         // Update button states based on list selection.
         macroList.getSelectionModel().addListSelectionListener(e -> {
             if (e.getValueIsAdjusting()) return;
-            updateButtonStates();
+            updateComponentStates();
         });
         
         // Listener to indicate that the macro name has been changed but not saved.
@@ -170,32 +173,28 @@ public class MacroEditorPanel extends JPanel {
     }
 
     /**
-     * Updates the enabled state of the 'Edit' and 'Delete' buttons
-     * based on the current selection in the macro step list.
+     * Updates the enabled state of all components based on the selected macro
+     * (built-in macros are read-only), the recording mode and the selected steps.
      */
-    private void updateButtonStates() {
-        boolean canModify = canModifyMacro();
-        int[] selectedIndices = macroList.getSelectedIndices();
-        boolean selectionExists = selectedIndices.length > 0;
+    private void updateComponentStates() {
+        final boolean canModify = canModifyMacro();
+        final boolean editable = canModify && !captureMode;
 
-        deleteButton.setEnabled(selectionExists && canModify);
-        
-        boolean singleSelection = selectedIndices.length == 1;
-        // The 'edit' button only works for delay steps.
-        boolean isDelay = singleSelection && listModel.getElementAt(selectedIndices[0]).startsWith("d.");
-        editButton.setEnabled(singleSelection && isDelay && canModify);
-    }
-    
-    /**
-     * A helper to enable or disable a set of components all at once.
-     * @param enabled The desired enabled state.
-     */
-    private void setComponentStates(boolean enabled) {
-        final JComponent[] components = { macroSelectionBox, macroList, nameText, addDelayButton, captureDelays, editButton, deleteButton };
-        for (JComponent c : components) {
-            c.setEnabled(enabled);
-        }
-        recordButton.setEnabled(canModifyMacro());
+        // Switching macros is always possible, except while recording.
+        macroSelectionBox.setEnabled(!captureMode);
+        macroList.setEnabled(!captureMode);
+        readOnlyHint.setVisible(macroSelectionBox.getSelectedIndex() != -1 && !canModify);
+
+        nameText.setEnabled(editable);
+        captureDelays.setEnabled(editable);
+        addDelayButton.setEnabled(editable);
+        recordButton.setEnabled(canModify);
+
+        final int[] selectedIndices = macroList.getSelectedIndices();
+        deleteButton.setEnabled(editable && selectedIndices.length > 0);
+        // The 'edit' button only works for a single delay step.
+        final boolean isDelay = selectedIndices.length == 1 && listModel.getElementAt(selectedIndices[0]).startsWith("d.");
+        editButton.setEnabled(editable && isDelay);
     }
 
 	/**
@@ -212,19 +211,17 @@ public class MacroEditorPanel extends JPanel {
 	 */
 	public void startStopRecording() {
 		captureMode = !captureMode;
-        // Disable most components during recording.
-        setComponentStates(!captureMode && canModifyMacro());
 		
 		if (captureMode) {
 			recordButton.setText("Stop Recording");
 			listModel.removeAllElements(); // Clear the previous sequence.
 			lastCapture = 0;
-            nameText.setEnabled(false); // Prevent name changes during recording.
 		} else {
 			recordButton.setText("Clear & Record");
-            nameText.setEnabled(canModifyMacro());
 			saveMacro();
 		}
+        // Disable most components during recording.
+        updateComponentStates();
 	}
 
 	/**
@@ -314,14 +311,6 @@ public class MacroEditorPanel extends JPanel {
 		if (loadingData || macroSelectionBox.getSelectedItem() == null) return;
         loadingData = true;
 
-        // Enable/disable components based on whether the macro is editable.
-        boolean canModify = canModifyMacro();
-        captureDelays.setEnabled(canModify);
-        addDelayButton.setEnabled(canModify);
-        nameText.setEditable(canModify);
-        recordButton.setEnabled(canModify);
-        updateButtonStates();
-
 		listModel.clear();
 		
 		final Properties macro = (Properties)macroSelectionBox.getSelectedItem();
@@ -337,6 +326,8 @@ public class MacroEditorPanel extends JPanel {
 		
 		loadingData = false;
         nameText.setForeground(Color.black); // Reset name color to black.
+        // Enable/disable components based on whether the macro is editable.
+        updateComponentStates();
 	}
 	
 	/**

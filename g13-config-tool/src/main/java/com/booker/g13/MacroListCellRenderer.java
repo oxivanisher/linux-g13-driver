@@ -27,8 +27,9 @@ public class MacroListCellRenderer extends DefaultListCellRenderer {
 		if (value instanceof Properties props) {
 			final String name = props.getProperty("name", "Unnamed Macro");
 			final String id = props.getProperty("id", "?");
-			// Set the display text to "[ID] Macro Name".
-			setText("[" + id + "] " + name);
+			// Set the display text to "[ID] Macro Name", marking the read-only built-in macros.
+			final boolean builtIn = id.matches("\\d+") && Integer.parseInt(id) < Configs.DEFAULT_MACROS_COUNT;
+			setText("[" + id + "] " + name + (builtIn ? " (built-in)" : ""));
 		}
 		
 		return this;

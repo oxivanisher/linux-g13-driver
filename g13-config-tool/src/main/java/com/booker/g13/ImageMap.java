@@ -45,6 +45,10 @@ public class ImageMap extends JLabel {
 	 */
 	public ImageMap() {
 		super(G13_KEYPAD);
+		// The key shapes are image coordinates, so keep the image in the top left corner.
+		// A centered image would move away from the shapes whenever the component gets resized.
+		setHorizontalAlignment(LEFT);
+		setVerticalAlignment(TOP);
 		
 		addMouseMotionListener(new MouseMotionListener() {
 			@Override

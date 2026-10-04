@@ -65,6 +65,7 @@ public class MacroEditorPanel extends JPanel {
         final JPanel northPanel = new JPanel(new BorderLayout());
 		macroSelectionBox.setRenderer(new MacroListCellRenderer());
 		northPanel.add(macroSelectionBox, BorderLayout.NORTH);
+		readOnlyHint.setToolTipText(readOnlyHint.getText()); // Full text, in case the label is cut off.
 		northPanel.add(readOnlyHint, BorderLayout.CENTER);
 
 		final JPanel namePanel = new JPanel(new BorderLayout());

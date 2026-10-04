@@ -15,7 +15,13 @@ find_package(PkgConfig REQUIRED)
 
 # Find modules
 pkg_check_modules(LIBUSB REQUIRED libusb-1.0)
-pkg_check_modules(APPINDICATOR REQUIRED appindicator3-0.1)
+# Prefer Ayatana AppIndicator (Debian/Ubuntu/Mint), fall back to legacy libappindicator
+pkg_check_modules(APPINDICATOR ayatana-appindicator3-0.1)
+if(APPINDICATOR_FOUND)
+    add_compile_definitions(USE_AYATANA_APPINDICATOR)
+else()
+    pkg_check_modules(APPINDICATOR REQUIRED appindicator3-0.1)
+endif()
 pkg_check_modules(GTK3 REQUIRED gtk+-3.0) 
 
 # Add include directories

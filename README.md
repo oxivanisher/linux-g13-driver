@@ -19,7 +19,7 @@ You need to install the following packages via your package manager:
 * `cmake`
 * `gtk3` / `gtk3-devel`
 * `libusb-1.0-0` (on some distros named `libusb-1.0-0-dev` or `libusb1-devel`)
-* `libappindicator-gtk3` (or similar)
+* `libappindicator-gtk3` or `libayatana-appindicator3` (Debian, Ubuntu, Linux Mint)
 * `Java 17` or higher
 * `python-psutil` (for the monitor script)
 

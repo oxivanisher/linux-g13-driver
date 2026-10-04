@@ -14,7 +14,8 @@ PKG_ARCH="base-devel cmake libusb gtk3 libappindicator-gtk3 maven jdk17-openjdk"
 
 # DEBIAN / UBUNTU (Pop!_OS, Mint, Kali)
 # 'build-essential' includes: make, gcc, g++, etc.
-PKG_DEBIAN="build-essential cmake libusb-1.0-0-dev libgtk-3-dev libappindicator3-dev maven openjdk-17-jdk"
+# The AppIndicator package is chosen at runtime (Ayatana or legacy), see select_debian_appindicator.
+PKG_DEBIAN="build-essential cmake libusb-1.0-0-dev libgtk-3-dev maven openjdk-17-jdk"
 
 # FEDORA (RHEL, CentOS, Nobara)
 # Explicitly listing 'make' here.
@@ -24,6 +25,20 @@ PKG_FEDORA="make automake cmake gcc gcc-c++ kernel-devel libusb1-devel gtk3-deve
 # Explicitly listing 'make' here.
 PKG_SUSE="make cmake gcc-c++ libusb-1_0-devel gtk3-devel libappindicator3-devel maven java-17-openjdk-devel"
 
+
+# Newer Debian/Ubuntu/Mint ship Ayatana AppIndicator, which conflicts with the legacy
+# libappindicator3. Keep whichever is already installed, otherwise prefer Ayatana.
+select_debian_appindicator() {
+    if dpkg -s libayatana-appindicator3-dev &> /dev/null; then
+        echo "libayatana-appindicator3-dev"
+    elif dpkg -s libappindicator3-dev &> /dev/null; then
+        echo "libappindicator3-dev"
+    elif apt-cache show libayatana-appindicator3-dev &> /dev/null; then
+        echo "libayatana-appindicator3-dev"
+    else
+        echo "libappindicator3-dev"
+    fi
+}
 
 echo "--- Detecting Package Manager ---"
 
@@ -35,8 +50,9 @@ if command -v pacman &> /dev/null; then
 
 elif command -v apt-get &> /dev/null; then
     echo "Detected System: Debian/Ubuntu based (apt)"
-    echo "Installing: $PKG_DEBIAN"
     sudo apt-get update
+    PKG_DEBIAN="$PKG_DEBIAN $(select_debian_appindicator)"
+    echo "Installing: $PKG_DEBIAN"
     sudo apt-get install -y $PKG_DEBIAN
 
 elif command -v dnf &> /dev/null; then

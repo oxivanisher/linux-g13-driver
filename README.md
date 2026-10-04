@@ -162,13 +162,18 @@ Currently, only one font size is implemented. There is an example script for sys
 
 ### Uninstallation
 
-To remove the driver and all installed files:
+To remove the driver and all installed files, use the target matching your installation method:
 
 ```bash
-make uninstall
+# Option A: System-Wide Installation
+systemctl --user disable --now g13
+sudo make uninstall
+
+# Option B: User-Local Installation (stops and disables the service itself)
+make uninstall-user
 ```
 
-(Note: This removes the binaries, UDEV rules, and service files, but keeps your configuration in ~/.config/g13 to prevent data loss.)
+(Note: This removes the binaries, the start menu entry, UDEV rules, and service files, but keeps your configuration in ~/.config/g13 to prevent data loss.)
 
 
 ## Notes

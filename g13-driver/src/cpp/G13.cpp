@@ -89,6 +89,7 @@ void G13::start() {
     if (!this->loaded) return;
     draw_test_pattern();
     loadBindings();
+    setModeLeds(1 << bindings); // Light the M-key of the active profile (M1 at start).
     keepGoing = 1;
 
     while (keepGoing && daemon_keep_running) {
@@ -257,10 +258,10 @@ G36=p,k.17
 G35=p,k.11
 G34=p,k.72
 G33=p,k.71
-G32=p,k.62
-G31=p,k.61
-G30=p,k.60
-G29=p,k.59
+G28=p,k.62
+G27=p,k.61
+G26=p,k.60
+G25=p,k.59
 G23=p,k.58
 G22=p,k.57
 G21=p,k.57
@@ -281,6 +282,15 @@ G20=p,k.50
         parse_bindings_from_stream(file);
         file.close();
     }
+}
+
+/**
+ * @brief Sets the LEDs of the M1, M2, M3 and MR keys.
+ * @param leds Bit mask: 1 = M1, 2 = M2, 4 = M3, 8 = MR.
+ */
+void G13::setModeLeds(int leds) {
+    unsigned char usb_data[] = { 5, (unsigned char)leds, 0, 0, 0 };
+    libusb_control_transfer(handle, LIBUSB_REQUEST_TYPE_CLASS | LIBUSB_RECIPIENT_INTERFACE, 9, 0x305, 0, usb_data, 5, 1000);
 }
 
 void G13::setColor(int red, int green, int blue) {
@@ -346,10 +356,13 @@ void G13::parse_key(int key, unsigned char *byte) {
     int pressed = actual_byte & mask;
 
     switch (key) {
-    case 25: case 26: case 27: case 28:
+    // M1, M2, M3 and MR switch between the four binding profiles (bindings-0..3).
+    // The L1-L4 keys below the LCD are regular, bindable keys.
+    case G13_KEY_M1: case G13_KEY_M2: case G13_KEY_M3: case G13_KEY_MR:
         if (pressed) {
-            bindings = key - 25; 
+            bindings = key - G13_KEY_M1;
             loadBindings();
+            setModeLeds(1 << bindings);
         }
         return;
     case 36: case 37: case 38: case 39:

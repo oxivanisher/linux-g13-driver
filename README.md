@@ -109,7 +109,7 @@ g13-gui
 
 This will bring up the UI.
 
-Profiles: The top 4 buttons under the LCD (M1, M2, M3, MR) switch between binding profiles.
+Profiles: The M1, M2, M3 and MR keys (the keys with LEDs above G1-G7) switch between four binding profiles. The LED of the active profile lights up, and each profile has its own bindings and backlight color. The driver always starts with M1.
 
 Save: Changes are saved automatically to `~/.config/g13/bindings-*.properties`.
 
@@ -117,7 +117,7 @@ Live Reload: The driver automatically detects file changes and reloads the confi
 
 ![Config Tool Screenshot](docs/ConfigTool.png)
 
-The top 4 buttons under the LCD screen select the bindings (M1-M3, MR).
+Click M1, M2, M3 or MR in the picture to select the profile to edit. The four small L1-L4 buttons under the LCD screen are regular keys and can be bound like the G-keys.
 
 > **Important:** If you configure the application while the driver is running, the driver will not pick up changes unless you select a different binding set or restart the driver.
 
@@ -125,7 +125,7 @@ The top 4 buttons under the LCD screen select the bindings (M1-M3, MR).
 
 The driver now includes a fixed default mapping. This means the GUI is not strictly necessary if you prefer other tools. You can map the keys using software like **Input Remapper**.
 
-*(Note: The quick profile change via the four small buttons under the display only works when using the G13 GUI tool.)*
+*(Note: The quick profile change via the M1, M2, M3 and MR keys uses the binding files of the G13 GUI tool.)*
 
 ### Manually create your own Mapping Set
 

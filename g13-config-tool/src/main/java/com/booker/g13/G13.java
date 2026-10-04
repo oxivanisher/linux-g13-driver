@@ -33,11 +33,12 @@ public class G13 extends JPanel {
 	 */
 	private static final int MAX_MACROS = 200;
 
-	// Named constants for the G13 keycodes of the M1, M2, M3, and MR buttons.
-    private static final int BINDING_KEY_M1 = 25;
-    private static final int BINDING_KEY_M2 = 26;
-    private static final int BINDING_KEY_M3 = 27;
-    private static final int BINDING_KEY_MR = 28;
+	// Named constants for the G13 keycodes of the M1, M2, M3, and MR buttons (the keys with LEDs above G1-G7).
+	// The L1-L4 keys below the LCD (25-28) are regular, bindable keys.
+    private static final int BINDING_KEY_M1 = 29;
+    private static final int BINDING_KEY_M2 = 30;
+    private static final int BINDING_KEY_M3 = 31;
+    private static final int BINDING_KEY_MR = 32;
     
     /**
      * A set containing the keycodes for the binding switch keys (M1, M2, M3, MR).

@@ -59,6 +59,7 @@ public:
     void stop();
     void loadBindings();
     void setColor(int r, int g, int b);
+    void setModeLeds(int leds);
 
     // --- LCD ---
     void clear_lcd_buffer();

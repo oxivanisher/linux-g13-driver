@@ -35,7 +35,10 @@ public class ImageMap extends JLabel {
 	private final Color mouseoverColor = new Color(255, 0, 0, 128); // Semi-transparent red for hovered key.
     
     /** A set of keycodes for the M1-M3 and MR keys, which are used to switch binding profiles. */
-    private static final Set<Integer> BINDING_SWITCH_KEYS = Set.of(25, 26, 27, 28);
+    private static final Set<Integer> BINDING_SWITCH_KEYS = Set.of(29, 30, 31, 32);
+    private static final String[] BINDING_SWITCH_NAMES = { "M1", "M2", "M3", "MR" };
+    /** Keycodes of the L1-L4 keys below the LCD. */
+    private static final int L1_KEY = 25, L4_KEY = 28;
 
 	private Key selected = null; // The currently clicked/selected key.
 	private Key mouseover = null; // The key currently under the mouse cursor.
@@ -192,6 +195,14 @@ public class ImageMap extends JLabel {
 	}
 
     /**
+     * Returns the name of a bindable key as used in the configuration, e.g. "G5" or "L1 (G25)".
+     */
+    private static String keyName(int code) {
+        String name = "G" + code;
+        return code >= L1_KEY && code <= L4_KEY ? "L" + (code - L1_KEY + 1) + " (" + name + ")" : name;
+    }
+
+    /**
      * Draws a tooltip-like box with details about the hovered key.
      * @param g The graphics context to draw on.
      * @param key The key to display information for.
@@ -201,13 +212,13 @@ public class ImageMap extends JLabel {
         // Display different information for binding-switch keys vs. regular keys.
         if (BINDING_SWITCH_KEYS.contains(key.getG13KeyCode())) {
             lines = new String[][]{
-                {"G13 Key", "M" + (key.getG13KeyCode() - 24)},
-                {"Configuration", "bindings-" + (key.getG13KeyCode() - 25) + ".properties"},
+                {"G13 Key", BINDING_SWITCH_NAMES[key.getG13KeyCode() - 29]},
+                {"Configuration", "bindings-" + (key.getG13KeyCode() - 29) + ".properties"},
                 {"This button is reserved to load bindings", ""},
             };
         } else {
             lines = new String[][]{
-                {"G13 Key", "G" + key.getG13KeyCode()},
+                {"G13 Key", keyName(key.getG13KeyCode())},
                 {"Mapped Value",   key.getMappedValue()},
                 {"Repeats",        key.getRepeats()},
             };

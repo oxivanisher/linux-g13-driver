@@ -26,6 +26,10 @@
                         <manifest>
                             <mainClass>com.booker.g13.G13</mainClass>
                         </manifest>
+                        <manifestEntries>
+                            <!-- Allows reading KeyEvent.rawCode (physical keycode), see JavaToLinuxKeymapping -->
+                            <Add-Opens>java.desktop/java.awt.event</Add-Opens>
+                        </manifestEntries>
                     </archive>
                 </configuration>
             </plugin>

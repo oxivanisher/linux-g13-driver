@@ -1,6 +1,7 @@
 package com.booker.g13;
 
 import java.awt.event.KeyEvent;
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -53,8 +54,8 @@ public class JavaToLinuxKeymapping {
             new KeyMapping("I", 23, KeyEvent.VK_I),
             new KeyMapping("O", 24, KeyEvent.VK_O),
             new KeyMapping("P", 25, KeyEvent.VK_P),
-            new KeyMapping("[", 26, KeyEvent.VK_BRACELEFT),
-            new KeyMapping("]", 27, KeyEvent.VK_BRACERIGHT),
+            new KeyMapping("[", 26, KeyEvent.VK_OPEN_BRACKET),
+            new KeyMapping("]", 27, KeyEvent.VK_CLOSE_BRACKET),
             new KeyMapping("Enter", 28, KeyEvent.VK_ENTER),
             new KeyMapping("L CTRL", 29, KeyEvent.VK_CONTROL, KeyEvent.KEY_LOCATION_LEFT),
             new KeyMapping("A", 30, KeyEvent.VK_A),
@@ -101,16 +102,17 @@ public class JavaToLinuxKeymapping {
             new KeyMapping("NumPad 7", 71, KeyEvent.VK_NUMPAD7),
             new KeyMapping("NumPad 8", 72, KeyEvent.VK_NUMPAD8),
             new KeyMapping("NumPad 9", 73, KeyEvent.VK_NUMPAD9),
-            new KeyMapping("NumPad -", 74, KeyEvent.VK_MINUS),
+            new KeyMapping("NumPad -", 74, KeyEvent.VK_SUBTRACT),
             new KeyMapping("NumPad 4", 75, KeyEvent.VK_NUMPAD4),
             new KeyMapping("NumPad 5", 76, KeyEvent.VK_NUMPAD5),
             new KeyMapping("NumPad 6", 77, KeyEvent.VK_NUMPAD6),
-            new KeyMapping("NumPad +", 78, KeyEvent.VK_PLUS),
+            new KeyMapping("NumPad +", 78, KeyEvent.VK_ADD),
             new KeyMapping("NumPad 1", 79, KeyEvent.VK_NUMPAD1),
             new KeyMapping("NumPad 2", 80, KeyEvent.VK_NUMPAD2),
             new KeyMapping("NumPad 3", 81, KeyEvent.VK_NUMPAD3),
-            new KeyMapping("Numpad Ins", 82, KeyEvent.VK_INSERT),
-            new KeyMapping("Numpad Del", 83, KeyEvent.VK_DELETE),
+            new KeyMapping("NumPad 0", 82, KeyEvent.VK_NUMPAD0),
+            new KeyMapping("NumPad .", 83, KeyEvent.VK_DECIMAL),
+            new KeyMapping("<>", 86, KeyEvent.VK_LESS),
             new KeyMapping("F11", 87, KeyEvent.VK_F11),
             new KeyMapping("F12", 88, KeyEvent.VK_F12),
             new KeyMapping("F13", 89, KeyEvent.VK_F13),
@@ -122,7 +124,7 @@ public class JavaToLinuxKeymapping {
             new KeyMapping("F19", 95, KeyEvent.VK_F19),
             new KeyMapping("R Enter", 96, KeyEvent.VK_ENTER, KeyEvent.KEY_LOCATION_NUMPAD),
             new KeyMapping("R Ctrl", 97, KeyEvent.VK_CONTROL, KeyEvent.KEY_LOCATION_RIGHT),
-            new KeyMapping("/", 98, KeyEvent.VK_SLASH, KeyEvent.KEY_LOCATION_NUMPAD),
+            new KeyMapping("NumPad /", 98, KeyEvent.VK_DIVIDE),
             new KeyMapping("PRT SCR", 99, KeyEvent.VK_PRINTSCREEN),
             new KeyMapping("R ALT", 100, KeyEvent.VK_ALT, KeyEvent.KEY_LOCATION_RIGHT),
             new KeyMapping("Home", 102, KeyEvent.VK_HOME),
@@ -135,7 +137,10 @@ public class JavaToLinuxKeymapping {
             new KeyMapping("PgDn", 109, KeyEvent.VK_PAGE_DOWN),
             new KeyMapping("Insert", 110, KeyEvent.VK_INSERT),
             new KeyMapping("Del", 111, KeyEvent.VK_DELETE),
-            new KeyMapping("Pause", 119, KeyEvent.VK_PAUSE)
+            new KeyMapping("Pause", 119, KeyEvent.VK_PAUSE),
+            new KeyMapping("L Super", 125, KeyEvent.VK_WINDOWS, KeyEvent.KEY_LOCATION_LEFT),
+            new KeyMapping("R Super", 126, KeyEvent.VK_WINDOWS, KeyEvent.KEY_LOCATION_RIGHT),
+            new KeyMapping("Menu", 127, KeyEvent.VK_CONTEXT_MENU)
     );
 
     /** Map for quick lookup from Linux keycode to KeyMapping data. */
@@ -170,6 +175,12 @@ public class JavaToLinuxKeymapping {
      * @return The corresponding Linux keycode, or 0 if no mapping is found.
      */
     public static int keyEventToCCode(KeyEvent event) {
+        // The driver emits physical keycodes, so prefer the physical key over the layout-dependent VK_ code.
+        int physicalCode = physicalKeyCode(event);
+        if (physicalCode > 0) {
+            return physicalCode;
+        }
+
         List<KeyMapping> candidates = JAVA_CODE_TO_DATA.get(event.getKeyCode());
         if (candidates == null) {
             System.err.println("JavaToLinuxKeyMapping: Unknown java event code: " + event);
@@ -184,6 +195,42 @@ public class JavaToLinuxKeymapping {
                 .orElse(candidates.get(0).linuxCode()); // Fallback to the first candidate if no location-specific one is found.
     }
     
+    /**
+     * Offset between X11 keycodes and Linux input event codes (X11 keycode = evdev code + 8).
+     */
+    private static final int X11_KEYCODE_OFFSET = 8;
+
+    /** KeyEvent.rawCode holds the X11 keycode of the physical key; null if it cannot be accessed. */
+    private static final Field RAW_CODE_FIELD = findRawCodeField();
+
+    private static Field findRawCodeField() {
+        try {
+            Field field = KeyEvent.class.getDeclaredField("rawCode");
+            field.setAccessible(true); // Requires "Add-Opens: java.desktop/java.awt.event" (see pom.xml)
+            return field;
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            System.err.println("JavaToLinuxKeyMapping: Physical keycodes unavailable, falling back to US layout mapping: " + e);
+            return null;
+        }
+    }
+
+    /**
+     * Returns the Linux keycode of the physical key that was pressed, independent of the keyboard layout.
+     * @param event The KeyEvent generated by Swing.
+     * @return The Linux keycode, or 0 if it is not available (e.g. not running on X11/XWayland).
+     */
+    private static int physicalKeyCode(KeyEvent event) {
+        if (RAW_CODE_FIELD == null) {
+            return 0;
+        }
+        try {
+            long rawCode = RAW_CODE_FIELD.getLong(event);
+            return rawCode > X11_KEYCODE_OFFSET ? (int) (rawCode - X11_KEYCODE_OFFSET) : 0;
+        } catch (IllegalAccessException e) {
+            return 0;
+        }
+    }
+
     /**
      * Helper method to convert a KeyEvent location constant to a string. For debugging.
      * @param pos The KeyEvent.KEY_LOCATION_* constant.

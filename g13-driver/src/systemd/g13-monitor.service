@@ -1,0 +1,17 @@
+[Unit]
+Description=Logitech G13 LCD System Monitor
+# Runs only while the driver runs. Without a connected G13, the monitor waits
+# until the driver's LCD pipe appears.
+BindsTo=g13.service
+After=g13.service
+
+[Service]
+Type=simple
+# Path for package installations, adjusted by "make install-user".
+ExecStart=/usr/bin/g13-monitor
+Restart=on-failure
+RestartSec=5
+
+[Install]
+# "systemctl --user enable g13-monitor" starts it together with the driver.
+WantedBy=g13.service

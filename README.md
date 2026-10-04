@@ -157,7 +157,31 @@ The LCD fits 5 lines of 26 characters. Only ASCII is supported: longer text is c
 
 Under the hood, the driver creates a Named Pipe (FIFO) at `$XDG_RUNTIME_DIR/g13-lcd` (usually `/run/user/$UID/g13-lcd`, or `/tmp/g13-lcd` if `XDG_RUNTIME_DIR` is not set). You can also write to it directly, e.g. `echo -e "CPU: 50%\nRAM: 4GB" > /run/user/$(id -u)/g13-lcd`.
 
-Currently, only one font size is implemented. There is an example script for system monitoring (`g13_monitor.py`, requires `python-psutil`) in the `scripts` folder. Feel free to try it out, modify it, or share your own scripts!
+Currently, only one font size is implemented.
+
+### LCD System Monitor
+
+`g13-monitor` shows live system stats on the LCD, updated every second:
+
+```
+19:12:03  up   3d 04:12
+CPU  42% [XXXX------] 65C
+RAM  23% 3.6G/15.5G
+NET in 1.2M/s out 85K/s
+DSK rd 12M/s wr 1.3M/s
+```
+
+It requires `python-psutil` (Debian/Ubuntu/Mint: `python3-psutil`). The CPU temperature is shown if your system provides it.
+
+Run it as a systemd user service, which starts and stops together with the driver:
+
+```bash
+systemctl --user enable --now g13-monitor
+```
+
+While no G13 is connected, the monitor waits and starts showing stats as soon as the device is plugged in. When it stops, it clears the LCD. Logs: `journalctl --user -u g13-monitor -f`. You can also run `g13-monitor` directly in a terminal.
+
+The script is in the `scripts` folder (`g13_monitor.py`). Feel free to modify it or share your own scripts!
 
 
 ### Uninstallation
@@ -166,7 +190,7 @@ To remove the driver and all installed files, use the target matching your insta
 
 ```bash
 # Option A: System-Wide Installation
-systemctl --user disable --now g13
+systemctl --user disable --now g13-monitor g13
 sudo make uninstall
 
 # Option B: User-Local Installation (stops and disables the service itself)

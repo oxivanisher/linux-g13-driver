@@ -5,8 +5,8 @@ G13 System Monitor: shows live system stats on the Logitech G13 LCD.
     19:12:03     up 3d 04:12
     CPU  42% [XXXX------] 65C
     RAM  23% 3.6G/15.5G
-    NET in 1.2M/s out 85K/s
-    DSK rd 12M/s wr 1.3M/s
+    NET in  1.2M/s out   85K/s
+    DSK rd   12M/s wr   1.3M/s
 
 Runs until stopped (Ctrl+C or the g13-monitor systemd user service). While no
 G13 is connected or the driver is not running, it waits and starts showing
@@ -108,8 +108,9 @@ def build_screen(rates):
         f"{now}  up {uptime:>10}",
         f"CPU {cpu:3.0f}% {create_bar(cpu)}{temp_str}",
         f"RAM {ram.percent:3.0f}% {format_size(ram.used)}/{format_size(ram.total)}",
-        f"NET in {format_size(net_in)}/s out {format_size(net_out)}/s",
-        f"DSK rd {format_size(disk_rd)}/s wr {format_size(disk_wr)}/s",
+        # Fixed-width values (format_size returns at most 5 characters), so the fields don't move.
+        f"NET in {format_size(net_in):>5}/s out {format_size(net_out):>5}/s",
+        f"DSK rd {format_size(disk_rd):>5}/s wr  {format_size(disk_wr):>5}/s",
     ])
 
 

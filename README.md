@@ -167,8 +167,8 @@ Currently, only one font size is implemented.
 19:12:03  up   3d 04:12
 CPU  42% [XXXX------] 65C
 RAM  23% 3.6G/15.5G
-NET in 1.2M/s out 85K/s
-DSK rd 12M/s wr 1.3M/s
+NET in  1.2M/s out   85K/s
+DSK rd   12M/s wr   1.3M/s
 ```
 
 It requires `python-psutil` (Debian/Ubuntu/Mint: `python3-psutil`). The CPU temperature is shown if your system provides it.

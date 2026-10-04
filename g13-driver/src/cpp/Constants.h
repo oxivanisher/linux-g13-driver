@@ -68,7 +68,7 @@ enum G13_KEYS {
     G13_KEY_LIGHT_STATE,   // State of the backlight.
 
     /* byte 6 of the report */
-    G13_KEY_BD,            // The "Backlight Dimmer" button.
+    G13_KEY_BD,            // The round L0 display button left of the LCD.
     G13_KEY_L1,            // The L1 display button.
     G13_KEY_L2,            // The L2 display button.
     G13_KEY_L3,            // The L3 display button.

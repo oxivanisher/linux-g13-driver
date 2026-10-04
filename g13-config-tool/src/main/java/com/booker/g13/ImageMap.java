@@ -37,8 +37,8 @@ public class ImageMap extends JLabel {
     /** A set of keycodes for the M1-M3 and MR keys, which are used to switch binding profiles. */
     private static final Set<Integer> BINDING_SWITCH_KEYS = Set.of(29, 30, 31, 32);
     private static final String[] BINDING_SWITCH_NAMES = { "M1", "M2", "M3", "MR" };
-    /** Keycodes of the L1-L4 keys below the LCD. */
-    private static final int L1_KEY = 25, L4_KEY = 28;
+    /** Keycodes of the LCD keys: L0 (round key left of the LCD) and L1-L4 (below the LCD). */
+    private static final int L0_KEY = 24, L4_KEY = 28;
 
 	private Key selected = null; // The currently clicked/selected key.
 	private Key mouseover = null; // The key currently under the mouse cursor.
@@ -199,7 +199,7 @@ public class ImageMap extends JLabel {
      */
     private static String keyName(int code) {
         String name = "G" + code;
-        return code >= L1_KEY && code <= L4_KEY ? "L" + (code - L1_KEY + 1) + " (" + name + ")" : name;
+        return code >= L0_KEY && code <= L4_KEY ? "L" + (code - L0_KEY) + " (" + name + ")" : name;
     }
 
     /**

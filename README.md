@@ -117,7 +117,7 @@ Live Reload: The driver automatically detects file changes and reloads the confi
 
 ![Config Tool Screenshot](docs/ConfigTool.png)
 
-Click M1, M2, M3 or MR in the picture to select the profile to edit. The four small L1-L4 buttons under the LCD screen are regular keys and can be bound like the G-keys.
+Click M1, M2, M3 or MR in the picture to select the profile to edit. The LCD buttons (the round L0 button left of the screen and the four small L1-L4 buttons below it) are regular keys and can be bound like the G-keys.
 
 > **Important:** If you configure the application while the driver is running, the driver will not pick up changes unless you select a different binding set or restart the driver.
 

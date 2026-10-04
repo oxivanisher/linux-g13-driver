@@ -1,0 +1,59 @@
+#!/bin/sh
+# g13-lcd: Show text on the Logitech G13 LCD via the driver's named pipe.
+#
+# Usage:
+#   g13-lcd "first line" "second line"   one argument per line
+#   some-command | g13-lcd               lines from stdin
+#   g13-lcd --clear                      empty the screen
+#
+# The LCD fits 5 lines of 26 characters (ASCII only). Longer text is cut
+# off, umlauts and accents are converted to ASCII (ä -> ae, é -> e).
+
+MAX_LINES=5
+MAX_CHARS=26
+
+# Same location as the driver (ConfigPath::getFifoPath).
+PIPE="${XDG_RUNTIME_DIR:-/tmp}/g13-lcd"
+
+usage() {
+    sed -n '4,10s/^# \{0,1\}//p' "$0"
+}
+
+case "$1" in
+    -h|--help)
+        usage
+        exit 0
+        ;;
+    -c|--clear)
+        text=""
+        ;;
+    *)
+        if [ $# -gt 0 ]; then
+            text=$(printf '%s\n' "$@")
+        elif [ ! -t 0 ]; then
+            text=$(cat)
+        else
+            usage >&2
+            exit 1
+        fi
+        ;;
+esac
+
+if [ ! -p "$PIPE" ]; then
+    echo "g13-lcd: $PIPE not found. Is the G13 driver running?" >&2
+    exit 1
+fi
+
+# The LCD font only has ASCII characters. Convert German umlauts explicitly
+# (iconv's result depends on the locale), then everything else via iconv.
+text=$(printf '%s\n' "$text" \
+    | sed 's/ä/ae/g; s/ö/oe/g; s/ü/ue/g; s/Ä/Ae/g; s/Ö/Oe/g; s/Ü/Ue/g' \
+    | LC_ALL=C.UTF-8 iconv -f UTF-8 -t ASCII//TRANSLIT 2>/dev/null \
+    | head -n "$MAX_LINES" | cut -c "1-$MAX_CHARS")
+
+# Write everything at once; the driver redraws the whole screen per write.
+# The timeout prevents blocking forever if the pipe has no reader.
+printf '%s\n' "$text" | timeout 2 sh -c 'cat > "$1"' sh "$PIPE" || {
+    echo "g13-lcd: Could not write to $PIPE. Is the G13 driver running?" >&2
+    exit 1
+}

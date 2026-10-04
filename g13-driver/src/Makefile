@@ -72,6 +72,7 @@ install:
 	echo 'java -jar $(JAVADIR)/$(GUI_JAR_NAME) "$$@"' >> g13-gui
 	install -m 755 g13-gui $(DESTDIR)$(BINDIR)/g13-gui
 	rm g13-gui
+	install -m 755 $(SCRIPT_DIR)/g13-lcd $(DESTDIR)$(BINDIR)/g13-lcd
 	
 	# Start menu entry
 	install -d $(DESTDIR)$(DATADIR)/applications
@@ -111,6 +112,7 @@ install-user:
 	echo '#!/bin/sh' > $(USER_INSTALL_DIR)/g13-gui
 	echo 'java -jar $(USER_INSTALL_DIR)/$(GUI_JAR_NAME) "$$@"' >> $(USER_INSTALL_DIR)/g13-gui
 	chmod +x $(USER_INSTALL_DIR)/g13-gui
+	install -m 755 $(SCRIPT_DIR)/g13-lcd $(USER_INSTALL_DIR)/g13-lcd
 	
 	# Start menu entry (absolute path, ~/.local/bin is not always in the menu's PATH)
 	mkdir -p $(USER_APPS_DIR)
@@ -151,6 +153,7 @@ uninstall:
 	@echo "--- Removing System-Wide Installation from $(DESTDIR)$(PREFIX) ---"
 	rm -f $(DESTDIR)$(BINDIR)/linux-g13-driver
 	rm -f $(DESTDIR)$(BINDIR)/g13-gui
+	rm -f $(DESTDIR)$(BINDIR)/g13-lcd
 	rm -f $(DESTDIR)$(JAVADIR)/$(GUI_JAR_NAME)
 	-rmdir $(DESTDIR)$(JAVADIR) 2>/dev/null
 	rm -f $(DESTDIR)$(DATADIR)/applications/linux-g13-gui.desktop
@@ -171,6 +174,7 @@ uninstall-user:
 	rm -f $(USER_INSTALL_DIR)/linux-g13-driver
 	rm -f $(USER_INSTALL_DIR)/$(GUI_JAR_NAME)
 	rm -f $(USER_INSTALL_DIR)/g13-gui
+	rm -f $(USER_INSTALL_DIR)/g13-lcd
 	rm -f $(USER_APPS_DIR)/linux-g13-gui.desktop
 	
 	# UDEV (Needs Sudo)

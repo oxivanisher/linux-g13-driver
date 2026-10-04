@@ -140,24 +140,24 @@ If you don't want to use the GUI App, you can edit the files manually in `~/.con
 
 ### Using the Display (scripting)
 
-You can write text to the display using a simple pipe command:
-
-The driver creates a Named Pipe (FIFO) to receive text for the LCD.
-
-Location: `/run/user/$UID/g13-lcd` (Check `/tmp/g13-lcd` as fallback if `/run` is unavailable).
+Use the `g13-lcd` command to show text on the LCD. Each argument is one line:
 
 ```bash
-# Find your pipe path (usually based on your user ID, e.g., 1000)
-PIPE="/run/user/$(id -u)/g13-lcd"
+# Show two lines
+g13-lcd "Hello World!" "CPU: 50%"
 
-# Send simple text
-echo "Hello World!" > $PIPE
+# Read lines from another command
+date "+%H:%M" | g13-lcd
 
-# Send multi-line text (CPU/RAM stats)
-echo -e "CPU: 50%\nRAM: 4GB" > $PIPE
+# Clear the screen
+g13-lcd --clear
 ```
 
-Currently, only one font size is implemented. There is an example script for system monitoring in the `scripts` folder. Feel free to try it out, modify it, or share your own scripts!
+The LCD fits 5 lines of 26 characters. Only ASCII is supported: longer text is cut off, and umlauts and accents are converted (`ä` → `ae`, `é` → `e`). Each call replaces the whole screen.
+
+Under the hood, the driver creates a Named Pipe (FIFO) at `$XDG_RUNTIME_DIR/g13-lcd` (usually `/run/user/$UID/g13-lcd`, or `/tmp/g13-lcd` if `XDG_RUNTIME_DIR` is not set). You can also write to it directly, e.g. `echo -e "CPU: 50%\nRAM: 4GB" > /run/user/$(id -u)/g13-lcd`.
+
+Currently, only one font size is implemented. There is an example script for system monitoring (`g13_monitor.py`, requires `python-psutil`) in the `scripts` folder. Feel free to try it out, modify it, or share your own scripts!
 
 
 ### Uninstallation

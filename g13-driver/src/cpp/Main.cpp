@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <unistd.h>
 #include <thread>
+#include <filesystem>
 #include <mutex>
 #include <libusb-1.0/libusb.h>
 #include <iomanip>
@@ -93,8 +94,23 @@ void device_management_thread_loop() {
 }
 
 // --- Tray Icon and Main Application Logic ---
+
+// Returns the g13-gui wrapper installed next to the driver binary (e.g. ~/.local/bin for "make install-user"),
+// or an empty string if there is none. Systemd user services do not have ~/.local/bin in their PATH.
+static std::string find_sibling_gui() {
+    std::error_code ec;
+    std::filesystem::path exe = std::filesystem::read_symlink("/proc/self/exe", ec);
+    if (ec) {
+        return "";
+    }
+    std::filesystem::path gui = exe.parent_path() / "g13-gui";
+    return access(gui.c_str(), X_OK) == 0 ? gui.string() : "";
+}
+
 static void show_gui(GtkMenuItem *item, gpointer user_data) {
-    syslog(LOG_INFO, "Attempting to start GUI via global command: g13-gui");
+    // Resolve the path before forking, the child should only call exec.
+    const std::string gui_path = find_sibling_gui();
+    syslog(LOG_INFO, "Attempting to start GUI: %s", gui_path.empty() ? "g13-gui (via PATH)" : gui_path.c_str());
 
     pid_t pid = fork();
 
@@ -110,14 +126,15 @@ static void show_gui(GtkMenuItem *item, gpointer user_data) {
         if (freopen("/dev/null", "w", stdout) == NULL) {}
         if (freopen("/dev/null", "w", stderr) == NULL) {}
 
-        // --- CHANGE START ---
-        // We now use the wrapper script 'g13-gui' which is in the system PATH (/usr/bin)
-        // This decouples the driver from knowing the JAR location.
+        // We use the wrapper script 'g13-gui', which decouples the driver from knowing the JAR location.
+        // Prefer the one installed next to the driver, fall back to a PATH lookup.
+        if (!gui_path.empty()) {
+            execl(gui_path.c_str(), "g13-gui", (char *)NULL);
+        }
         execlp("g13-gui", "g13-gui", (char *)NULL);
-        // --- CHANGE END ---
 
-        // If we reach here, execlp failed (e.g. g13-gui not in PATH)
-        syslog(LOG_ERR, "Failed to execute 'g13-gui'. Is it installed in /usr/bin?");
+        // If we reach here, exec failed (e.g. g13-gui not installed next to the driver or in PATH)
+        syslog(LOG_ERR, "Failed to execute 'g13-gui'. Is it installed next to the driver or in PATH?");
         _exit(1); 
     } 
     else {

@@ -13,6 +13,7 @@ G13 is connected or the driver is not running, it waits and starts showing
 stats as soon as the driver's LCD pipe appears. Requires python psutil.
 """
 import errno
+import glob
 import os
 import signal
 import sys
@@ -28,6 +29,9 @@ REFRESH_SECONDS = 1.0
 
 # Common sensor names for the CPU temperature (Intel, AMD, Raspberry Pi).
 CPU_SENSORS = ("coretemp", "k10temp", "zenpower", "cpu_thermal")
+
+# Path of the CPU temperature input, looked up once (False = not looked up yet).
+_cpu_temp_path = False
 
 
 def create_bar(percent, length=10):
@@ -51,16 +55,40 @@ def format_uptime(seconds):
     return f"{days}d {hours:02d}:{minutes:02d}" if days else f"{hours:02d}:{minutes:02d}"
 
 
-def cpu_temperature():
-    """Returns the CPU temperature in degrees Celsius, or None if not available."""
-    try:
-        sensors = psutil.sensors_temperatures()
-    except (AttributeError, OSError):
-        return None
+def find_cpu_temp_path():
+    """Returns the temperature input of the CPU sensor in /sys/class/hwmon, or None."""
+    names = {}
+    for hwmon in glob.glob("/sys/class/hwmon/hwmon*"):
+        try:
+            with open(os.path.join(hwmon, "name")) as f:
+                names[f.read().strip()] = hwmon
+        except OSError:
+            continue
     for name in CPU_SENSORS:
-        if sensors.get(name):
-            return sensors[name][0].current
+        path = os.path.join(names.get(name, ""), "temp1_input")
+        if name in names and os.path.exists(path):
+            return path
     return None
+
+
+def cpu_temperature():
+    """
+    Returns the CPU temperature in degrees Celsius, or None if not available.
+    Only the CPU sensor is read: reading all sensors every second (psutil.sensors_temperatures)
+    also polls e.g. embedded controllers, which can cause kernel warnings like
+    "Concurrent access to the ACPI EC detected" (asus-ec-sensors).
+    """
+    global _cpu_temp_path
+    if _cpu_temp_path is False:
+        _cpu_temp_path = find_cpu_temp_path()
+    if _cpu_temp_path is None:
+        return None
+    try:
+        with open(_cpu_temp_path) as f:
+            return int(f.read()) / 1000
+    except (OSError, ValueError):
+        _cpu_temp_path = False  # Look it up again next time.
+        return None
 
 
 def net_bytes():
@@ -88,6 +116,15 @@ class Rate:
         rate = max(0, value - self.value) / max(now - self.time, 1e-6)
         self.value, self.time = value, now
         return rate
+
+
+def start_measuring():
+    """Starts the rate measurements (network, disk, CPU usage) from now on."""
+    psutil.cpu_percent(interval=None)  # The first call always returns 0.
+    return {
+        "net": [Rate(v) for v in net_bytes()],
+        "disk": [Rate(v) for v in disk_bytes()],
+    }
 
 
 def build_screen(rates):
@@ -140,18 +177,23 @@ def main():
     signal.signal(signal.SIGTERM, lambda signum, frame: sys.exit(0))
 
     print(f"G13 Monitor started, writing to {PIPE_PATH}. Press Ctrl+C to exit.", flush=True)
-    rates = {
-        "net": [Rate(v) for v in net_bytes()],
-        "disk": [Rate(v) for v in disk_bytes()],
-    }
-    psutil.cpu_percent(interval=None)  # The first call always returns 0.
+    rates = None  # Only measured while a G13 is connected.
     connected = None
 
     try:
         while True:
-            screen = build_screen(rates)
-            now_connected = write_to_pipe(screen)
-            if now_connected != connected:
+            if not os.path.exists(PIPE_PATH):
+                # No G13 connected or driver not running: don't collect any stats.
+                rates = None
+                now_connected = False
+            elif rates is None:
+                # (Re)connected: start measuring, the first stats are shown in the next round.
+                rates = start_measuring()
+                now_connected = connected
+            else:
+                now_connected = write_to_pipe(build_screen(rates))
+
+            if now_connected != connected and now_connected is not None:
                 connected = now_connected
                 print("G13 found, showing stats." if connected
                       else "Waiting for the G13 driver and device...", flush=True)
